@@ -1922,6 +1922,13 @@ const CLOUD_DATA_PATH = "physicsTracker/zainab";
 let cloudReady = false;
 let cloudApplying = false;
 let cloudConfigured = false;
+let lastCloudDB = null;
+let cloudWriteInFlight = false;
+let cloudWriteQueued = false;
+
+function deepCopy(value){
+    return value == null ? value : JSON.parse(JSON.stringify(value));
+}
 
 function isFirebaseConfigured(){
     return !!(window.firebase &&
@@ -1929,6 +1936,39 @@ function isFirebaseConfigured(){
         !FIREBASE_CONFIG.apiKey.includes("ضعِي_") &&
         FIREBASE_CONFIG.projectId &&
         !FIREBASE_CONFIG.projectId.includes("ضعِي_"));
+}
+
+/*
+   نبني تحديثات دقيقة بدل رفع قاعدة البيانات كاملة.
+   بهذا، تعديل جهاز لا يمسح تعديلات الأجهزة الأخرى غير المتعلقة به.
+*/
+function buildCloudPatch(oldValue,newValue,path="",out={}){
+    if(JSON.stringify(oldValue) === JSON.stringify(newValue)) return out;
+
+    const oldObj = oldValue && typeof oldValue === "object";
+    const newObj = newValue && typeof newValue === "object";
+
+    if(!oldObj || !newObj){
+        if(path) out[path] = (newValue === undefined ? null : newValue);
+        return out;
+    }
+
+    const keys = new Set([
+        ...Object.keys(oldValue || {}),
+        ...Object.keys(newValue || {})
+    ]);
+
+    for(const key of keys){
+        const childPath = path ? `${path}/${key}` : key;
+        if(!(key in (newValue || {}))){
+            out[childPath] = null;
+        }else if(!(key in (oldValue || {}))){
+            out[childPath] = newValue[key];
+        }else{
+            buildCloudPatch(oldValue[key],newValue[key],childPath,out);
+        }
+    }
+    return out;
 }
 
 async function initCloudSync(){
@@ -1958,12 +1998,15 @@ async function initCloudSync(){
                     },
                     workItems:Array.isArray(remote.workItems) ? remote.workItems : []
                 };
+                lastCloudDB = deepCopy(db);
                 localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+                refreshAllPagesAfterCloud();
                 cloudApplying = false;
                 cloudReady = true;
-                refreshAllPagesAfterCloud();
             }else{
+                /* أول جهاز فقط يضع النسخة المحلية عندما تكون السحابة فارغة. */
                 cloudReady = true;
+                lastCloudDB = {};
                 uploadDBToCloud();
             }
         },error=>{
@@ -1978,12 +2021,33 @@ async function initCloudSync(){
     }
 }
 
-function uploadDBToCloud(){
+async function uploadDBToCloud(){
     if(!cloudConfigured || !cloudReady || cloudApplying) return;
+    if(cloudWriteInFlight){
+        cloudWriteQueued = true;
+        return;
+    }
+
     try{
-        firebase.database().ref(CLOUD_DATA_PATH).set(db);
+        cloudWriteInFlight = true;
+        const base = lastCloudDB || {};
+        const current = deepCopy(db);
+        const patch = buildCloudPatch(base,current);
+        const paths = Object.keys(patch);
+
+        if(paths.length){
+            await firebase.database().ref(CLOUD_DATA_PATH).update(patch);
+            lastCloudDB = current;
+        }
     }catch(error){
         console.error("Cloud upload error:",error);
+        showToast("تعذر حفظ آخر تعديل سحابيًا — سيبقى محفوظًا على هذا الجهاز","danger");
+    }finally{
+        cloudWriteInFlight = false;
+        if(cloudWriteQueued){
+            cloudWriteQueued = false;
+            uploadDBToCloud();
+        }
     }
 }
 
