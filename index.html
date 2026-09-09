@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>نظام متابعة طالبات الفيزياء</title>
 
+<!-- Cloud Storage: Firebase Realtime Database -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+
 <!-- QR Generator -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -1894,8 +1899,127 @@ function loadDB(){
     return JSON.parse(JSON.stringify(defaultDB));
 }
 
+/* =========================================================
+   CLOUD SYNC
+   نفس قاعدة البيانات تُستخدم في الجوال والآيباد واللابتوب
+========================================================= */
+
+/*
+   ضعي بيانات مشروع Firebase هنا مرة واحدة.
+   هذه البيانات ليست كلمة مرور؛ أمان البيانات يعتمد على Firebase Security Rules.
+*/
+const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyApKUFJTsTJsQb7NZYuWp-qdHO1Ss_y_g0",
+    authDomain: "physics-tracker-zainab.firebaseapp.com",
+    databaseURL: "https://physics-tracker-zainab-default-rtdb.firebaseio.com/",
+    projectId: "physics-tracker-zainab",
+    storageBucket: "physics-tracker-zainab.firebasestorage.app",
+    messagingSenderId: "527678737003",
+    appId: "1:527678737003:web:e1109fc0237150df2fbf2e"
+};
+
+const CLOUD_DATA_PATH = "physicsTracker/zainab";
+let cloudReady = false;
+let cloudApplying = false;
+let cloudConfigured = false;
+
+function isFirebaseConfigured(){
+    return !!(window.firebase &&
+        FIREBASE_CONFIG.apiKey &&
+        !FIREBASE_CONFIG.apiKey.includes("ضعِي_") &&
+        FIREBASE_CONFIG.projectId &&
+        !FIREBASE_CONFIG.projectId.includes("ضعِي_"));
+}
+
+async function initCloudSync(){
+    if(!isFirebaseConfigured()) return;
+
+    try{
+        if(!firebase.apps.length){
+            firebase.initializeApp(FIREBASE_CONFIG);
+        }
+
+        cloudConfigured = true;
+        await firebase.auth().signInAnonymously();
+
+        const ref = firebase.database().ref(CLOUD_DATA_PATH);
+
+        ref.on("value", snapshot=>{
+            const remote = snapshot.val();
+
+            if(remote && typeof remote === "object"){
+                cloudApplying = true;
+                db = {
+                    ...defaultDB,
+                    ...remote,
+                    settings:{
+                        ...defaultDB.settings,
+                        ...(remote.settings || {})
+                    },
+                    workItems:Array.isArray(remote.workItems) ? remote.workItems : []
+                };
+                localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+                cloudApplying = false;
+                cloudReady = true;
+                refreshAllPagesAfterCloud();
+            }else{
+                cloudReady = true;
+                uploadDBToCloud();
+            }
+        },error=>{
+            console.error("Cloud sync error:",error);
+            cloudReady = false;
+            showToast("تعذر الاتصال بالتخزين السحابي — البيانات المحلية ما زالت محفوظة","danger");
+        });
+    }catch(error){
+        console.error("Firebase initialization error:",error);
+        cloudReady = false;
+        showToast("تعذر تشغيل التخزين السحابي — تأكدي من إعداد Firebase","danger");
+    }
+}
+
+function uploadDBToCloud(){
+    if(!cloudConfigured || !cloudReady || cloudApplying) return;
+    try{
+        firebase.database().ref(CLOUD_DATA_PATH).set(db);
+    }catch(error){
+        console.error("Cloud upload error:",error);
+    }
+}
+
+function refreshAllPagesAfterCloud(){
+    try{
+        updateDashboard();
+        loadSettingsForm();
+        populateClassSelect("studentsClassSelect");
+        populateClassSelect("attendanceClassSelect");
+        populateClassSelect("oralClassSelect");
+        populateClassSelect("worksClassSelect");
+        populateClassSelect("quiz1ClassSelect");
+        populateClassSelect("quiz2ClassSelect");
+        populateClassSelect("presentationClassSelect");
+        populateClassSelect("behaviorClassSelect");
+        populateClassSelect("reportClassSelect");
+        populateClassSelect("randomClassSelect");
+        renderClasses();
+        renderStudentsPage();
+        renderAttendance();
+        renderOralPage();
+        renderWorksPage();
+        renderQuizPage(1);
+        renderQuizPage(2);
+        renderPresentationPage();
+        renderBehaviorPage();
+        renderClassReport();
+        prepareWheel();
+    }catch(error){
+        console.error("Cloud refresh error:",error);
+    }
+}
+
 function saveDB(){
     localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
+    uploadDBToCloud();
 }
 
 /* =========================================================
@@ -5083,6 +5207,9 @@ document.addEventListener("DOMContentLoaded",()=>{
     updateDashboard();
 
     loadSettingsForm();
+
+    /* تشغيل المزامنة السحابية مع بقاء التخزين المحلي كنسخة احتياطية */
+    initCloudSync();
 
     populateClassSelect("studentsClassSelect");
     populateClassSelect("attendanceClassSelect");
