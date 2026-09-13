@@ -1059,24 +1059,9 @@ tr:hover td{
             <span>شفوي</span>
         </button>
 
-        <button class="nav-btn" data-page="works" onclick="showPage('works')">
-            <span class="nav-icon">📝</span>
-            <span>أعمال تحريرية</span>
-        </button>
-
-        <button class="nav-btn" data-page="quiz1" onclick="showPage('quiz1')">
-            <span class="nav-icon">📝</span>
-            <span>اختبار قصير أول</span>
-        </button>
-
-        <button class="nav-btn" data-page="quiz2" onclick="showPage('quiz2')">
-            <span class="nav-icon">📝</span>
-            <span>اختبار قصير ثاني</span>
-        </button>
-
-        <button class="nav-btn" data-page="presentation" onclick="showPage('presentation')">
-            <span class="nav-icon">🎤</span>
-            <span>العرض التقديمي</span>
+        <button class="nav-btn" data-page="grading" onclick="showPage('grading')">
+            <span class="nav-icon">🎯</span>
+            <span>الدرجات</span>
         </button>
 
         <button class="nav-btn" data-page="behavior" onclick="showPage('behavior')">
@@ -1141,8 +1126,8 @@ tr:hover td{
         <div class="hero-content">
             <h1 id="welcomeTitle">مرحبًا بك في نظام متابعة طالبات الفيزياء 👋</h1>
             <p>
-                نظام متكامل لمتابعة الحضور، المشاركة الشفوية، الأعمال التحريرية،
-                الاختبارات، السلوك والتقارير.
+                نظام متكامل لمتابعة الحضور، المشاركة الشفوية، الدرجات المرنة،
+                السلوك والتقارير.
             </p>
         </div>
 
@@ -1359,7 +1344,7 @@ tr:hover td{
 
             <div class="form-group">
                 <label>التاريخ</label>
-                <input id="attendanceDate" type="date" onchange="renderAttendance()">
+                <input id="attendanceDate" type="date" oninput="renderAttendance()" onchange="renderAttendance()" onblur="renderAttendance()">
             </div>
 
         </div>
@@ -1443,146 +1428,85 @@ tr:hover td{
 
 </section>
 
-<!-- ================= WORKS ================= -->
+<!-- ================= FLEXIBLE GRADING ================= -->
 
-<section id="page-works" class="page" style="display:none">
+<section id="page-grading" class="page" style="display:none">
 
     <div class="card">
-
         <div class="card-title">
             <div>
-                <h3>📝 الأعمال التحريرية</h3>
-                <p>اختاري الصف وسجلي نوع العمل والتاريخ والدرجة مباشرة</p>
+                <h3>🎯 نظام الدرجات المرن</h3>
+                <p>أنشئي بنود التقييم التي تناسب مادّتك وحددي الدرجة العظمى لكل بند.</p>
             </div>
         </div>
 
         <div class="grid grid-3">
-
             <div class="form-group">
-                <label>الصف</label>
-                <select id="worksClassSelect" onchange="clearWrittenWorkList()"></select>
+                <label>اسم بند التقييم</label>
+                <input id="gradeCategoryName" placeholder="مثال: واجبات، عملي، مشروع، اختبار قصير...">
             </div>
-
             <div class="form-group">
-                <label>نوع العمل التحريري</label>
-                <input id="workType" placeholder="مثال: ورقة عمل، واجب، نشاط..." oninput="clearWrittenWorkList()">
+                <label>الدرجة العظمى</label>
+                <input id="gradeCategoryMax" type="number" min="0.25" step="0.25" value="10">
             </div>
-
             <div class="form-group">
-                <label>التاريخ</label>
-                <input id="workDate" type="date" onchange="clearWrittenWorkList()">
+                <label>احتساب البند في المجموع</label>
+                <select id="gradeCategoryInclude">
+                    <option value="yes">نعم</option>
+                    <option value="no">لا</option>
+                </select>
             </div>
-
         </div>
 
-        <div style="margin-top:4px;display:flex;justify-content:flex-start">
-            <button class="btn btn-primary" onclick="addWrittenWork()">➕ إضافة</button>
-        </div>
-
-        <div class="form-group" style="margin-top:18px">
-            <label>الأعمال المضافة</label>
-            <select id="savedWorkSelect" onchange="selectSavedWrittenWork()">
-                <option value="">اختاري العمل لعرض الطالبات ودرجاتهن</option>
-            </select>
-        </div>
-
+        <button class="btn btn-purple" onclick="addGradeCategory()">➕ إضافة بند تقييم</button>
+        <div id="gradeCategoriesList" style="margin-top:16px"></div>
     </div>
 
     <div class="card">
+        <div class="card-title">
+            <div>
+                <h3>📝 إنشاء تقييم وتسجيل الدرجات</h3>
+                <p>اختاري الصف والبند، ثم أنشئي تقييمًا وأدخلي درجات الطالبات.</p>
+            </div>
+        </div>
 
+        <div class="grid grid-2">
+            <div class="form-group">
+                <label>الصف</label>
+                <select id="gradeClassSelect" onchange="renderGradeAssessments()"></select>
+            </div>
+            <div class="form-group">
+                <label>بند التقييم</label>
+                <select id="gradeCategorySelect"></select>
+            </div>
+            <div class="form-group">
+                <label>اسم التقييم</label>
+                <input id="gradeAssessmentTitle" placeholder="مثال: الواجب الأول، اختبار الوحدة الأولى...">
+            </div>
+            <div class="form-group">
+                <label>التاريخ</label>
+                <input id="gradeAssessmentDate" type="date">
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="addGradeAssessment()">➕ إنشاء سجل درجات</button>
+
+        <div class="form-group" style="margin-top:18px">
+            <label>سجلات الدرجات المضافة</label>
+            <select id="gradeAssessmentSelect" onchange="renderFlexibleGradeSheet()">
+                <option value="">اختاري سجلًا لعرض الطالبات ودرجاتهن</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="card">
         <div class="card-title">
             <div>
                 <h3>درجات الطالبات</h3>
-                <p>تُحفظ الدرجة مباشرة عند إدخالها</p>
+                <p>تُحفظ الدرجة مباشرة، ويمكن استخدام ربع الدرجة مثل 7.25.</p>
             </div>
         </div>
-
-        <div id="worksList"></div>
-
-    </div>
-
-</section>
-
-<!-- ================= QUIZ 1 ================= -->
-
-<section id="page-quiz1" class="page" style="display:none">
-
-    <div class="card">
-
-        <div class="card-title">
-            <div>
-                <h3>📝 الاختبار القصير الأول</h3>
-                <p>اختاري الصف وأدخلي الدرجة مباشرة</p>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>اختيار الصف</label>
-            <select id="quiz1ClassSelect" onchange="renderQuizPage(1)"></select>
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <div id="quiz1List"></div>
-
-    </div>
-
-</section>
-
-<!-- ================= QUIZ 2 ================= -->
-
-<section id="page-quiz2" class="page" style="display:none">
-
-    <div class="card">
-
-        <div class="card-title">
-            <div>
-                <h3>📝 الاختبار القصير الثاني</h3>
-                <p>اختاري الصف وأدخلي الدرجة مباشرة</p>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>اختيار الصف</label>
-            <select id="quiz2ClassSelect" onchange="renderQuizPage(2)"></select>
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <div id="quiz2List"></div>
-
-    </div>
-
-</section>
-
-<!-- ================= PRESENTATION ================= -->
-
-<section id="page-presentation" class="page" style="display:none">
-
-    <div class="card">
-
-        <div class="card-title">
-            <div>
-                <h3>🎤 العرض التقديمي</h3>
-                <p>اختاري الصف وأدخلي الدرجات مباشرة</p>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label>اختيار الصف</label>
-            <select id="presentationClassSelect" onchange="renderPresentationPage()"></select>
-        </div>
-
-    </div>
-
-    <div class="card">
-
-        <div id="presentationList"></div>
-
+        <div id="flexibleGradeSheet"></div>
     </div>
 
 </section>
@@ -1633,7 +1557,7 @@ tr:hover td{
         <div class="card-title">
             <div>
                 <h3>📊 التقارير</h3>
-                <p>التقرير العام يعرض درجات جميع عناصر التقييم ويحسب المجموع</p>
+                <p>التقرير العام يعرض بنود الدرجات المرنة ويحسب المجموع تلقائيًا</p>
             </div>
         </div>
 
@@ -1863,6 +1787,10 @@ const defaultDB = {
     participation:[],
     attendance:[],
     behavior:[],
+    gradeCategories:[],
+    gradeAssessments:[],
+    flexibleGrades:[],
+    /* البيانات القديمة تبقى محفوظة داخليًا فقط حتى لا تضيع النسخ السابقة */
     works:[],
     workItems:[],
     quizzes1:[],
@@ -1888,7 +1816,10 @@ function loadDB(){
                     ...defaultDB.settings,
                     ...(parsed.settings || {})
                 },
-                workItems:Array.isArray(parsed.workItems) ? parsed.workItems : []
+                workItems:Array.isArray(parsed.workItems) ? parsed.workItems : [],
+                gradeCategories:Array.isArray(parsed.gradeCategories) ? parsed.gradeCategories : [],
+                gradeAssessments:Array.isArray(parsed.gradeAssessments) ? parsed.gradeAssessments : [],
+                flexibleGrades:Array.isArray(parsed.flexibleGrades) ? parsed.flexibleGrades : []
             };
         }
 
@@ -1996,7 +1927,10 @@ async function initCloudSync(){
                         ...defaultDB.settings,
                         ...(remote.settings || {})
                     },
-                    workItems:Array.isArray(remote.workItems) ? remote.workItems : []
+                    workItems:Array.isArray(remote.workItems) ? remote.workItems : [],
+                    gradeCategories:Array.isArray(remote.gradeCategories) ? remote.gradeCategories : [],
+                    gradeAssessments:Array.isArray(remote.gradeAssessments) ? remote.gradeAssessments : [],
+                    flexibleGrades:Array.isArray(remote.flexibleGrades) ? remote.flexibleGrades : []
                 };
                 lastCloudDB = deepCopy(db);
                 localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
@@ -2058,10 +1992,7 @@ function refreshAllPagesAfterCloud(){
         populateClassSelect("studentsClassSelect");
         populateClassSelect("attendanceClassSelect");
         populateClassSelect("oralClassSelect");
-        populateClassSelect("worksClassSelect");
-        populateClassSelect("quiz1ClassSelect");
-        populateClassSelect("quiz2ClassSelect");
-        populateClassSelect("presentationClassSelect");
+        populateClassSelect("gradeClassSelect");
         populateClassSelect("behaviorClassSelect");
         populateClassSelect("reportClassSelect");
         populateClassSelect("randomClassSelect");
@@ -2069,10 +2000,9 @@ function refreshAllPagesAfterCloud(){
         renderStudentsPage();
         renderAttendance();
         renderOralPage();
-        renderWorksPage();
-        renderQuizPage(1);
-        renderQuizPage(2);
-        renderPresentationPage();
+        renderGradeCategories();
+        populateGradeCategorySelect();
+        renderGradeAssessments();
         renderBehaviorPage();
         renderClassReport();
         prepareWheel();
@@ -2318,28 +2248,10 @@ const pageInfo = {
         icon:"🗣️"
     },
 
-    works:{
-        title:"أعمال تحريرية",
-        subtitle:"درجات الأعمال التحريرية",
-        icon:"📝"
-    },
-
-    quiz1:{
-        title:"اختبار قصير أول",
-        subtitle:"درجات الاختبار القصير الأول",
-        icon:"📝"
-    },
-
-    quiz2:{
-        title:"اختبار قصير ثاني",
-        subtitle:"درجات الاختبار القصير الثاني",
-        icon:"📝"
-    },
-
-    presentation:{
-        title:"العرض التقديمي",
-        subtitle:"درجات العروض التقديمية",
-        icon:"🎤"
+    grading:{
+        title:"الدرجات",
+        subtitle:"نظام درجات مرن حسب بنود التقييم",
+        icon:"🎯"
     },
 
     behavior:{
@@ -2454,32 +2366,13 @@ function refreshPage(page){
 
     }
 
-    if(page === "works"){
+    if(page === "grading"){
 
-        populateClassSelect("worksClassSelect");
-        setDefaultDate("workDate");
-        renderWorksPage();
-
-    }
-
-    if(page === "quiz1"){
-
-        populateClassSelect("quiz1ClassSelect");
-        renderQuizPage(1);
-
-    }
-
-    if(page === "quiz2"){
-
-        populateClassSelect("quiz2ClassSelect");
-        renderQuizPage(2);
-
-    }
-
-    if(page === "presentation"){
-
-        populateClassSelect("presentationClassSelect");
-        renderPresentationPage();
+        populateClassSelect("gradeClassSelect");
+        setDefaultDate("gradeAssessmentDate");
+        renderGradeCategories();
+        populateGradeCategorySelect();
+        renderGradeAssessments();
 
     }
 
@@ -2748,6 +2641,15 @@ function deleteClass(classId){
         b=>!studentIds.includes(b.studentId)
     );
 
+    const removedAssessmentIds = db.gradeAssessments
+        .filter(a=>a.classId===classId)
+        .map(a=>a.id);
+
+    db.gradeAssessments = db.gradeAssessments.filter(a=>a.classId!==classId);
+    db.flexibleGrades = db.flexibleGrades.filter(g=>
+        !studentIds.includes(g.studentId) && !removedAssessmentIds.includes(g.assessmentId)
+    );
+
     db.works = db.works.filter(
         w=>!studentIds.includes(w.studentId)
     );
@@ -3010,6 +2912,9 @@ function deleteStudent(studentId){
     db.behavior =
         db.behavior.filter(x=>x.studentId !== studentId);
 
+    db.flexibleGrades =
+        db.flexibleGrades.filter(x=>x.studentId !== studentId);
+
     db.works =
         db.works.filter(x=>x.studentId !== studentId);
 
@@ -3134,8 +3039,9 @@ function renderAttendance(){
     const classId =
         document.getElementById("attendanceClassSelect")?.value;
 
-    const date =
-        document.getElementById("attendanceDate")?.value;
+    const dateInput = document.getElementById("attendanceDate");
+    const date = dateInput?.value || today();
+    if(dateInput && !dateInput.value) dateInput.value = date;
 
     const box =
         document.getElementById("attendanceList");
@@ -4084,6 +3990,198 @@ function savePresentation(studentId,value){
 }
 
 /* =========================================================
+   FLEXIBLE GRADING
+========================================================= */
+
+function addGradeCategory(){
+    const name=document.getElementById("gradeCategoryName")?.value.trim();
+    const max=scoreNumber(document.getElementById("gradeCategoryMax")?.value);
+    const includeTotal=document.getElementById("gradeCategoryInclude")?.value !== "no";
+    if(!name){ showToast("اكتبي اسم بند التقييم","danger"); return; }
+    if(max<=0){ showToast("أدخلي درجة عظمى صحيحة","danger"); return; }
+    db.gradeCategories.push({id:uid("gcat"),name,max,includeTotal});
+    document.getElementById("gradeCategoryName").value="";
+    saveDB();
+    renderGradeCategories();
+    populateGradeCategorySelect();
+    renderClassReport();
+    showToast("تمت إضافة بند التقييم","success");
+}
+
+function editGradeCategory(id){
+    const cat=db.gradeCategories.find(c=>c.id===id);
+    if(!cat) return;
+    const name=prompt("اسم بند التقييم:",cat.name);
+    if(name===null) return;
+    const clean=name.trim();
+    if(!clean){ showToast("اسم البند لا يمكن أن يكون فارغًا","danger"); return; }
+    const maxText=prompt("الدرجة العظمى:",String(cat.max));
+    if(maxText===null) return;
+    const max=scoreNumber(maxText);
+    if(max<=0){ showToast("الدرجة العظمى غير صحيحة","danger"); return; }
+    cat.name=clean;
+    cat.max=max;
+    saveDB();
+    renderGradeCategories();
+    populateGradeCategorySelect();
+    renderFlexibleGradeSheet();
+    renderClassReport();
+}
+
+function deleteGradeCategory(id){
+    const cat=db.gradeCategories.find(c=>c.id===id);
+    if(!cat) return;
+    const hasAssessments=db.gradeAssessments.some(a=>a.categoryId===id);
+    if(hasAssessments){
+        showToast("احذفي سجلات الدرجات التابعة لهذا البند أولًا","danger");
+        return;
+    }
+    if(!confirm(`حذف بند التقييم "${cat.name}"؟`)) return;
+    db.gradeCategories=db.gradeCategories.filter(c=>c.id!==id);
+    saveDB();
+    renderGradeCategories();
+    populateGradeCategorySelect();
+    renderClassReport();
+}
+
+function toggleGradeCategoryTotal(id){
+    const cat=db.gradeCategories.find(c=>c.id===id);
+    if(!cat) return;
+    cat.includeTotal = cat.includeTotal===false ? true : false;
+    saveDB();
+    renderGradeCategories();
+    renderClassReport();
+}
+
+function renderGradeCategories(){
+    const box=document.getElementById("gradeCategoriesList");
+    if(!box) return;
+    if(!db.gradeCategories.length){
+        box.innerHTML=`<div class="empty"><div class="empty-icon">🎯</div><h3>لا توجد بنود تقييم</h3><p>أضيفي البنود التي تناسب توزيع درجات مادّتك.</p></div>`;
+        return;
+    }
+    box.innerHTML=`<div class="table-wrap"><table><thead><tr><th>البند</th><th>الدرجة العظمى</th><th>يدخل في المجموع</th><th>إجراءات</th></tr></thead><tbody>${db.gradeCategories.map(cat=>`<tr><td style="font-weight:bold">${escapeHTML(cat.name)}</td><td>${cat.max}</td><td><button class="btn btn-light" onclick="toggleGradeCategoryTotal('${cat.id}')">${cat.includeTotal===false?'لا':'نعم'}</button></td><td><button class="btn btn-light" onclick="editGradeCategory('${cat.id}')">تعديل</button> <button class="btn btn-danger" onclick="deleteGradeCategory('${cat.id}')">حذف</button></td></tr>`).join("")}</tbody></table></div>`;
+}
+
+function populateGradeCategorySelect(){
+    const select=document.getElementById("gradeCategorySelect");
+    if(!select) return;
+    const old=select.value;
+    select.innerHTML=`<option value="">اختاري بند التقييم</option>`+db.gradeCategories.map(cat=>`<option value="${cat.id}">${escapeHTML(cat.name)} — ${cat.max}</option>`).join("");
+    if(db.gradeCategories.some(c=>c.id===old)) select.value=old;
+}
+
+function addGradeAssessment(){
+    const classId=document.getElementById("gradeClassSelect")?.value;
+    const categoryId=document.getElementById("gradeCategorySelect")?.value;
+    const title=document.getElementById("gradeAssessmentTitle")?.value.trim();
+    const date=document.getElementById("gradeAssessmentDate")?.value || today();
+    if(!classId){ showToast("اختاري الصف","danger"); return; }
+    if(!categoryId){ showToast("اختاري بند التقييم","danger"); return; }
+    if(!title){ showToast("اكتبي اسم التقييم","danger"); return; }
+    const item={id:uid("gass"),classId,categoryId,title,date};
+    db.gradeAssessments.push(item);
+    saveDB();
+    document.getElementById("gradeAssessmentTitle").value="";
+    renderGradeAssessments();
+    const select=document.getElementById("gradeAssessmentSelect");
+    if(select){ select.value=item.id; renderFlexibleGradeSheet(); }
+    renderClassReport();
+    showToast("تم إنشاء سجل الدرجات","success");
+}
+
+function renderGradeAssessments(){
+    const classId=document.getElementById("gradeClassSelect")?.value;
+    const select=document.getElementById("gradeAssessmentSelect");
+    if(!select) return;
+    const old=select.value;
+    const items=db.gradeAssessments.filter(a=>!classId || a.classId===classId).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    select.innerHTML=`<option value="">اختاري سجلًا لعرض الطالبات ودرجاتهن</option>`+items.map(a=>{
+        const cat=db.gradeCategories.find(c=>c.id===a.categoryId);
+        return `<option value="${a.id}">${escapeHTML(a.title)} — ${escapeHTML(cat?.name||"")} — ${formatDate(a.date)}</option>`;
+    }).join("");
+    if(items.some(a=>a.id===old)) select.value=old;
+    renderFlexibleGradeSheet();
+}
+
+function normalizeFlexibleScore(value,max){
+    if(value===null || value===undefined || String(value).trim()==="") return null;
+    let n=Number(value);
+    if(!Number.isFinite(n)) return null;
+    n=Math.round(n*4)/4;
+    if(n<0) n=0;
+    if(n>max) n=max;
+    return n;
+}
+
+function setFlexibleGrade(assessmentId,studentId,value){
+    const assessment=db.gradeAssessments.find(a=>a.id===assessmentId);
+    const cat=db.gradeCategories.find(c=>c.id===assessment?.categoryId);
+    if(!assessment || !cat) return;
+    const score=normalizeFlexibleScore(value,scoreNumber(cat.max));
+    const index=db.flexibleGrades.findIndex(g=>g.assessmentId===assessmentId && g.studentId===studentId);
+    if(score===null){
+        if(index>=0) db.flexibleGrades.splice(index,1);
+    }else if(index>=0){
+        db.flexibleGrades[index].score=score;
+    }else{
+        db.flexibleGrades.push({id:uid("fgrade"),assessmentId,studentId,score});
+    }
+    saveDB();
+    renderClassReport();
+}
+
+function deleteGradeAssessment(id){
+    const item=db.gradeAssessments.find(a=>a.id===id);
+    if(!item) return;
+    if(!confirm(`حذف سجل الدرجات "${item.title}" وجميع درجاته؟`)) return;
+    db.gradeAssessments=db.gradeAssessments.filter(a=>a.id!==id);
+    db.flexibleGrades=db.flexibleGrades.filter(g=>g.assessmentId!==id);
+    saveDB();
+    renderGradeAssessments();
+    renderClassReport();
+    showToast("تم حذف سجل الدرجات","success");
+}
+
+function renderFlexibleGradeSheet(){
+    const id=document.getElementById("gradeAssessmentSelect")?.value;
+    const box=document.getElementById("flexibleGradeSheet");
+    if(!box) return;
+    if(!id){
+        box.innerHTML=`<div class="empty"><div class="empty-icon">📝</div><h3>اختاري سجل درجات</h3></div>`;
+        return;
+    }
+    const item=db.gradeAssessments.find(a=>a.id===id);
+    const cat=db.gradeCategories.find(c=>c.id===item?.categoryId);
+    if(!item || !cat) return;
+    const students=getStudentsByClass(item.classId);
+    box.innerHTML=`<div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px"><div><strong>${escapeHTML(item.title)}</strong><div style="color:#777;font-size:12px;margin-top:4px">${escapeHTML(cat.name)} — الدرجة العظمى ${cat.max} — ${formatDate(item.date)}</div></div><button class="btn btn-danger" onclick="deleteGradeAssessment('${item.id}')">🗑️ حذف السجل</button></div><div class="table-wrap"><table><thead><tr><th>#</th><th>اسم الطالبة</th><th>الدرجة / ${cat.max}</th></tr></thead><tbody>${students.map((student,index)=>{const grade=db.flexibleGrades.find(g=>g.assessmentId===item.id&&g.studentId===student.id);return `<tr><td>${index+1}</td><td style="font-weight:bold;text-align:right">${escapeHTML(student.name)}</td><td><input class="score-input" type="number" min="0" max="${cat.max}" step="0.25" value="${grade?.score ?? ''}" onchange="setFlexibleGrade('${item.id}','${student.id}',this.value)"></td></tr>`;}).join("")}</tbody></table></div>`;
+}
+
+function getFlexibleStudentTotal(studentId,classId){
+    let total=0,possible=0;
+    db.gradeAssessments.filter(a=>a.classId===classId).forEach(a=>{
+        const cat=db.gradeCategories.find(c=>c.id===a.categoryId);
+        if(!cat || cat.includeTotal===false) return;
+        possible += scoreNumber(cat.max);
+        const grade=db.flexibleGrades.find(g=>g.assessmentId===a.id && g.studentId===studentId);
+        total += scoreNumber(grade?.score);
+    });
+    return {total,possible,percent:possible ? Math.round((total/possible)*1000)/10 : 0};
+}
+
+function getStudentCategoryFlexibleScore(studentId,classId,categoryId){
+    const assessments=db.gradeAssessments.filter(a=>a.classId===classId && a.categoryId===categoryId);
+    let value=0,possible=0;
+    assessments.forEach(a=>{
+        const cat=db.gradeCategories.find(c=>c.id===a.categoryId);
+        possible += scoreNumber(cat?.max);
+        value += scoreNumber(db.flexibleGrades.find(g=>g.assessmentId===a.id && g.studentId===studentId)?.score);
+    });
+    return {value,possible};
+}
+
+/* =========================================================
    BEHAVIOR
 ========================================================= */
 
@@ -4260,52 +4358,9 @@ function reportClassChanged(){
     renderClassReport();
 }
 
-function getStudentScores(studentId){
-
-    const oral =
-        participationCount(studentId);
-
-    const works =
-        db.works
-        .filter(w=>w.studentId===studentId)
-        .reduce((sum,w)=>sum+scoreNumber(w.score),0);
-
-    const quiz1 =
-        db.quizzes1
-        .filter(q=>q.studentId===studentId)
-        .reduce((sum,q)=>sum+scoreNumber(q.score),0);
-
-    const quiz2 =
-        db.quizzes2
-        .filter(q=>q.studentId===studentId)
-        .reduce((sum,q)=>sum+scoreNumber(q.score),0);
-
-    const presentation =
-        db.presentations
-        .filter(p=>p.studentId===studentId)
-        .reduce((sum,p)=>sum+scoreNumber(p.score),0);
-
-    const total =
-        oral +
-        works +
-        quiz1 +
-        quiz2 +
-        presentation;
-
-    return {
-        oral,
-        works,
-        quiz1,
-        quiz2,
-        presentation,
-        total
-    };
-
-}
-
 function renderClassReport(){
-    const classId = document.getElementById('reportClassSelect')?.value;
-    const box = document.getElementById('reportArea');
+    const classId=document.getElementById('reportClassSelect')?.value;
+    const box=document.getElementById('reportArea');
     if(!box) return;
     populateReportStudents();
     if(!classId){
@@ -4321,6 +4376,7 @@ function renderClassReport(){
     const school=db.settings.school || 'اسم المدرسة';
     const teacher=db.settings.teacher || 'زينب محمد';
     const subject=db.settings.subject || 'الفيزياء';
+    const categories=db.gradeCategories.filter(cat=>db.gradeAssessments.some(a=>a.classId===classId && a.categoryId===cat.id));
     box.innerHTML=`
         <div id="classReportPrint" class="report-print-sheet">
             <div class="report-school-header">
@@ -4335,17 +4391,11 @@ function renderClassReport(){
             </div>
             <div class="table-wrap">
                 <table class="report-print-table">
-                    <thead><tr><th>#</th><th>اسم الطالبة</th><th>الشفوي</th><th>الأعمال التحريرية</th><th>القصير الأول</th><th>القصير الثاني</th><th>العرض التقديمي</th><th>المجموع</th></tr></thead>
-                    <tbody>
-                        ${students.map((s,index)=>{
-                            const scores=getStudentScores(s.id);
-                            return `<tr>
-                                <td>${index+1}</td><td style="font-weight:bold;text-align:right">${escapeHTML(s.name)}</td>
-                                <td>${scores.oral}</td><td>${scores.works}</td><td>${scores.quiz1}</td><td>${scores.quiz2}</td><td>${scores.presentation}</td>
-                                <td><strong style="font-size:15px">${scores.total}</strong></td>
-                            </tr>`;
-                        }).join('')}
-                    </tbody>
+                    <thead><tr><th>#</th><th>اسم الطالبة</th>${categories.map(cat=>`<th>${escapeHTML(cat.name)}</th>`).join('')}<th>المجموع</th><th>النسبة</th></tr></thead>
+                    <tbody>${students.map((student,index)=>{
+                        const total=getFlexibleStudentTotal(student.id,classId);
+                        return `<tr><td>${index+1}</td><td style="font-weight:bold;text-align:right">${escapeHTML(student.name)}</td>${categories.map(cat=>{const score=getStudentCategoryFlexibleScore(student.id,classId,cat.id);return `<td>${score.value}${score.possible ? ' / '+score.possible : ''}</td>`;}).join('')}<td><strong>${total.total} / ${total.possible}</strong></td><td>${total.percent}%</td></tr>`;
+                    }).join('')}</tbody>
                 </table>
             </div>
             <div class="report-print-footer">
@@ -4353,337 +4403,40 @@ function renderClassReport(){
                 <span>المادة: ${escapeHTML(subject)}</span>
                 <span>عدد الطالبات: ${students.length}</span>
             </div>
-        </div>
-    `;
+        </div>`;
 }
 
 function renderIndividualReport(){
-
-    const studentId =
-        document.getElementById("reportStudentSelect")?.value;
-
-    const box =
-        document.getElementById("reportArea");
-
-    if(!studentId){
-
-        showToast("اختاري الطالبة","danger");
-
-        return;
-    }
-
-    const s = getStudent(studentId);
-
+    const studentId=document.getElementById("reportStudentSelect")?.value;
+    const box=document.getElementById("reportArea");
+    if(!box) return;
+    if(!studentId){ showToast("اختاري الطالبة","danger"); return; }
+    const s=getStudent(studentId);
     if(!s) return;
+    const c=getClass(s.classId);
+    const total=getFlexibleStudentTotal(studentId,s.classId);
+    const participation=db.participation.filter(p=>p.studentId===studentId).sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
+    const attendance=db.attendance.filter(a=>a.studentId===studentId).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const behavior=db.behavior.filter(b=>b.studentId===studentId).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+    const assessments=db.gradeAssessments.filter(a=>a.classId===s.classId).slice().sort((a,b)=>(b.date||"").localeCompare(a.date||""));
 
-    const c = getClass(s.classId);
-
-    const scores =
-        getStudentScores(studentId);
-
-    const participation =
-        db.participation
-        .filter(p=>p.studentId===studentId)
-        .sort((a,b)=>(b.timestamp||0)-(a.timestamp||0));
-
-    const attendance =
-        db.attendance
-        .filter(a=>a.studentId===studentId);
-
-    const behavior =
-        db.behavior
-        .filter(b=>b.studentId===studentId);
-
-    const works =
-        db.works
-        .filter(w=>w.studentId===studentId);
-
-    box.innerHTML = `
-
+    box.innerHTML=`
         <div id="individualReportPrint">
-
-            <div class="print-title">
-
-                <h2>
-                    التقرير الفردي للطالبة
-                </h2>
-
-                <h3>
-                    ${escapeHTML(s.name)}
-                </h3>
-
-                <p>
-                    الصف: ${escapeHTML(c ? c.name : "")}
-                </p>
-
+            <div class="print-title"><h2>التقرير الفردي للطالبة</h2><h3>${escapeHTML(s.name)}</h3><p>الصف: ${escapeHTML(c ? c.name : "")}</p></div>
+            <div class="grid grid-3" style="margin-bottom:20px">
+                <div class="stat"><div class="stat-icon">🏆</div><div><div class="stat-number">${total.total} / ${total.possible}</div><div class="stat-label">مجموع الدرجات</div></div></div>
+                <div class="stat"><div class="stat-icon">📊</div><div><div class="stat-number">${total.percent}%</div><div class="stat-label">النسبة</div></div></div>
+                <div class="stat"><div class="stat-icon">🗣️</div><div><div class="stat-number">${participation.length}</div><div class="stat-label">المشاركات الشفوية</div></div></div>
             </div>
 
-            <div class="grid grid-4" style="margin-bottom:20px">
+            <div class="card" style="box-shadow:none"><h3>🎯 الدرجات</h3><div class="table-wrap"><table><thead><tr><th>التقييم</th><th>البند</th><th>التاريخ</th><th>الدرجة</th></tr></thead><tbody>${assessments.length===0?`<tr><td colspan="4">لا توجد درجات مسجلة</td></tr>`:assessments.map(a=>{const cat=db.gradeCategories.find(x=>x.id===a.categoryId);const grade=db.flexibleGrades.find(g=>g.assessmentId===a.id&&g.studentId===studentId);return `<tr><td>${escapeHTML(a.title)}</td><td>${escapeHTML(cat?.name||"")}</td><td>${formatDate(a.date)}</td><td>${grade?.score ?? '-'} / ${cat?.max ?? ''}</td></tr>`;}).join('')}</tbody></table></div></div>
 
-                <div class="stat">
-                    <div class="stat-icon">🗣️</div>
-                    <div>
-                        <div class="stat-number">
-                            ${scores.oral}
-                        </div>
-                        <div class="stat-label">
-                            الشفوي
-                        </div>
-                    </div>
-                </div>
+            <div class="card" style="box-shadow:none"><h3>🗣️ سجل المشاركات الشفوية</h3>${participation.length===0?`<p style="color:#777">لا توجد مشاركات مسجلة.</p>`:`<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الوقت</th><th>طريقة التسجيل</th></tr></thead><tbody>${participation.map(p=>`<tr><td>${formatDate(p.date)}</td><td>${escapeHTML(p.time||"")}</td><td>${p.method==="qr"?"📷 QR":"✍️ يدوي"}</td></tr>`).join('')}</tbody></table></div>`}</div>
 
-                <div class="stat">
-                    <div class="stat-icon">📝</div>
-                    <div>
-                        <div class="stat-number">
-                            ${scores.works}
-                        </div>
-                        <div class="stat-label">
-                            الأعمال
-                        </div>
-                    </div>
-                </div>
+            <div class="card" style="box-shadow:none"><h3>📅 الحضور</h3><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>${attendance.length===0?`<tr><td colspan="2">لا توجد سجلات</td></tr>`:attendance.map(a=>`<tr><td>${formatDate(a.date)}</td><td>${escapeHTML(a.status)}</td></tr>`).join('')}</tbody></table></div></div>
 
-                <div class="stat">
-                    <div class="stat-icon">📊</div>
-                    <div>
-                        <div class="stat-number">
-                            ${scores.quiz1 + scores.quiz2}
-                        </div>
-                        <div class="stat-label">
-                            الاختبارات
-                        </div>
-                    </div>
-                </div>
-
-                <div class="stat">
-                    <div class="stat-icon">🏆</div>
-                    <div>
-                        <div class="stat-number">
-                            ${scores.total}
-                        </div>
-                        <div class="stat-label">
-                            المجموع
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="card" style="box-shadow:none">
-
-                <h3>🗣️ سجل المشاركات الشفوية</h3>
-
-                ${
-                    participation.length === 0 ?
-
-                    `<p style="color:#777">
-                        لا توجد مشاركات مسجلة.
-                    </p>` :
-
-                    `
-                    <div class="table-wrap">
-
-                        <table>
-
-                            <thead>
-                                <tr>
-                                    <th>التاريخ</th>
-                                    <th>الوقت</th>
-                                    <th>طريقة التسجيل</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-
-                                ${participation.map(p=>`
-
-                                    <tr>
-
-                                        <td>
-                                            ${formatDate(p.date)}
-                                        </td>
-
-                                        <td>
-                                            ${escapeHTML(p.time || "")}
-                                        </td>
-
-                                        <td>
-                                            ${p.method === "qr" ?
-                                                "📷 QR" :
-                                                "✍️ يدوي"}
-                                        </td>
-
-                                    </tr>
-
-                                `).join("")}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-                    `
-                }
-
-            </div>
-
-            <div class="card" style="box-shadow:none">
-
-                <h3>📅 الحضور</h3>
-
-                <div class="table-wrap">
-
-                    <table>
-
-                        <thead>
-                            <tr>
-                                <th>التاريخ</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-
-                            ${
-                                attendance.length === 0 ?
-
-                                `
-                                <tr>
-                                    <td colspan="2">
-                                        لا توجد سجلات
-                                    </td>
-                                </tr>
-                                ` :
-
-                                attendance.map(a=>`
-
-                                    <tr>
-
-                                        <td>
-                                            ${formatDate(a.date)}
-                                        </td>
-
-                                        <td>
-                                            ${escapeHTML(a.status)}
-                                        </td>
-
-                                    </tr>
-
-                                `).join("")
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-            <div class="card" style="box-shadow:none">
-
-                <h3>📝 الأعمال التحريرية</h3>
-
-                <div class="table-wrap">
-
-                    <table>
-
-                        <thead>
-
-                            <tr>
-                                <th>النوع</th>
-                                <th>التاريخ</th>
-                                <th>الدرجة</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            ${
-                                works.length === 0 ?
-
-                                `
-                                <tr>
-                                    <td colspan="3">
-                                        لا توجد أعمال
-                                    </td>
-                                </tr>
-                                ` :
-
-                                works.map(w=>`
-
-                                    <tr>
-
-                                        <td>
-                                            ${escapeHTML(w.type)}
-                                        </td>
-
-                                        <td>
-                                            ${formatDate(w.date)}
-                                        </td>
-
-                                        <td>
-                                            ${w.score}
-                                        </td>
-
-                                    </tr>
-
-                                `).join("")
-                            }
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-            <div class="card" style="box-shadow:none">
-
-                <h3>💬 السلوك</h3>
-
-                ${
-                    behavior.length === 0 ?
-
-                    `<p style="color:#777">لا توجد ملاحظات سلوكية.</p>` :
-
-                    `
-                    <ul>
-                        ${behavior.map(b=>`
-                            <li style="margin-bottom:8px">
-                                ${escapeHTML(b.note)}
-                                —
-                                <small>
-                                    ${formatDate(b.date)}
-                                </small>
-                            </li>
-                        `).join("")}
-                    </ul>
-                    `
-                }
-
-            </div>
-
-            <div style="
-                background:#f4eaff;
-                color:#7026a8;
-                border-radius:15px;
-                padding:20px;
-                text-align:center;
-                font-size:20px;
-                font-weight:bold;
-                margin-top:20px;
-            ">
-                المجموع النهائي: ${scores.total}
-            </div>
-
-        </div>
-
-    `;
-
+            <div class="card" style="box-shadow:none"><h3>💬 السلوك</h3>${behavior.length===0?`<p style="color:#777">لا توجد ملاحظات سلوكية.</p>`:`<ul>${behavior.map(b=>`<li style="margin-bottom:8px">${escapeHTML(b.note)} — <small>${formatDate(b.date)}</small></li>`).join('')}</ul>`}</div>
+        </div>`;
 }
 
 function printCurrentReport(){
@@ -5264,6 +5017,16 @@ document.addEventListener("click",e=>{
    INITIALIZATION
 ========================================================= */
 
+window.addEventListener("pageshow",()=>{
+    try{ renderAttendance(); }catch(e){}
+});
+
+document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState === "visible"){
+        try{ renderAttendance(); }catch(e){}
+    }
+});
+
 document.addEventListener("DOMContentLoaded",()=>{
 
     updateDate();
@@ -5278,16 +5041,13 @@ document.addEventListener("DOMContentLoaded",()=>{
     populateClassSelect("studentsClassSelect");
     populateClassSelect("attendanceClassSelect");
     populateClassSelect("oralClassSelect");
-    populateClassSelect("worksClassSelect");
-    populateClassSelect("quiz1ClassSelect");
-    populateClassSelect("quiz2ClassSelect");
-    populateClassSelect("presentationClassSelect");
+    populateClassSelect("gradeClassSelect");
     populateClassSelect("behaviorClassSelect");
     populateClassSelect("reportClassSelect");
     populateClassSelect("randomClassSelect");
 
     setDefaultDate("attendanceDate");
-    setDefaultDate("workDate");
+    setDefaultDate("gradeAssessmentDate");
     setDefaultDate("behaviorDate");
 
     renderClasses();
@@ -5295,10 +5055,9 @@ document.addEventListener("DOMContentLoaded",()=>{
     renderStudentsPage();
     renderAttendance();
     renderOralPage();
-    renderWorksPage();
-    renderQuizPage(1);
-    renderQuizPage(2);
-    renderPresentationPage();
+    renderGradeCategories();
+    populateGradeCategorySelect();
+    renderGradeAssessments();
     renderBehaviorPage();
     renderClassReport();
     prepareWheel();
