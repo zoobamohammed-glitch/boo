@@ -4977,26 +4977,46 @@ function updateDate(){
 }
 
 /* =========================================================
-   HOVER SOUND
+   INTERACTION SOUNDS — buttons / navigation / controls
+   Keeps the original sound identity across desktop, iPad and mobile.
 ========================================================= */
 
-document.addEventListener("mouseover",e=>{
+let lastHoverControl = null;
 
-    if(
-        e.target.matches("button") ||
-        e.target.closest("button")
-    ){
+function getSoundControl(target){
+    if(!target || !target.closest) return null;
+    return target.closest("button, .nav-btn, .logo, a, select, input[type='button'], input[type='submit']");
+}
 
-        if(!e.target.dataset.hoverSound){
+/* صوت خفيف عند تقريب المؤشر من الأزرار والعناصر التفاعلية */
+document.addEventListener("pointerover",e=>{
+    const control = getSoundControl(e.target);
+    if(!control || control === lastHoverControl) return;
 
-            e.target.dataset.hoverSound = "1";
+    lastHoverControl = control;
 
-            playHover();
-
-        }
-
+    /* hover الحقيقي فقط للأجهزة التي لديها مؤشر/ماوس */
+    if(e.pointerType !== "touch"){
+        playHover();
     }
+});
 
+document.addEventListener("pointerout",e=>{
+    const control = getSoundControl(e.target);
+    if(!control) return;
+
+    const next = e.relatedTarget && getSoundControl(e.relatedTarget);
+    if(next !== control){
+        lastHoverControl = null;
+    }
+});
+
+/* صوت عند الضغط — يعمل بالماوس واللمس على الجوال والآيباد */
+document.addEventListener("click",e=>{
+    const control = getSoundControl(e.target);
+    if(control){
+        playClick();
+    }
 });
 
 /* =========================================================
