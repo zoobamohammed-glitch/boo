@@ -1623,7 +1623,7 @@ tr:hover td{
 
             <div class="form-group">
                 <label>طريقة الاختيار</label>
-                <select id="randomMode">
+                <select id="randomMode" onchange="prepareWheel()">
                     <option value="repeat">السماح بتكرار الطالبة</option>
                     <option value="no-repeat">بدون تكرار حتى اختيار الجميع</option>
                 </select>
@@ -1917,6 +1917,11 @@ async function initCloudSync(){
 
         ref.on("value", snapshot=>{
             const remote = snapshot.val();
+
+            // لا نسمح لنسخة سحابية أقدم أن تمحو تعديلًا محليًا ما زال قيد الحفظ.
+            if(cloudWriteInFlight && !cloudApplying){
+                return;
+            }
 
             if(remote && typeof remote === "object"){
                 cloudApplying = true;
@@ -3174,7 +3179,9 @@ function setAttendance(studentId,status){
 
         status:status,
 
-        time:nowTime()
+        time:nowTime(),
+
+        updatedAt:Date.now()
     };
 
     if(index >= 0){
@@ -3274,7 +3281,12 @@ function renderOralPage(){
 
                             <button class="btn btn-small btn-primary"
                                 onclick="recordManualParticipation('${s.id}')">
-                                ➕ تسجيل مشاركة
+                                ➕ زيادة مشاركة
+                            </button>
+
+                            <button class="btn btn-small btn-light"
+                                onclick="removeManualParticipation('${s.id}')">
+                                ➖ إنقاص مشاركة
                             </button>
 
                         </div>
@@ -3293,6 +3305,38 @@ function renderOralPage(){
 function recordManualParticipation(studentId){
 
     recordParticipation(studentId,"manual");
+
+}
+
+function removeManualParticipation(studentId){
+
+    const student = getStudent(studentId);
+    if(!student) return;
+
+    let latestIndex = -1;
+    let latestTime = -1;
+
+    db.participation.forEach((p,index)=>{
+        if(p.studentId === studentId && p.method === "manual"){
+            const t = Number(p.timestamp || 0);
+            if(t >= latestTime){
+                latestTime = t;
+                latestIndex = index;
+            }
+        }
+    });
+
+    if(latestIndex === -1){
+        showToast(`لا توجد مشاركة يدوية لإنقاصها — ${student.name}`);
+        return;
+    }
+
+    db.participation.splice(latestIndex,1);
+    saveDB();
+    playClick();
+    showToast(`تم إنقاص مشاركة واحدة — ${student.name}`,"success");
+    renderOralPage();
+    updateDashboard();
 
 }
 
@@ -4492,8 +4536,16 @@ function prepareWheel(){
         return;
     }
 
-    const students =
+    let students =
         getStudentsByClass(classId);
+
+    const mode = document.getElementById("randomMode")?.value;
+    if(mode === "no-repeat"){
+        if(!wheelUsed[classId]) wheelUsed[classId] = [];
+        const remaining = students.filter(s => !wheelUsed[classId].includes(s.id));
+        // إذا انتهت الدورة، نعرض الجميع من جديد؛ إعادة الدورة الفعلية تتم عند الضغط على اختيار.
+        students = remaining.length ? remaining : students;
+    }
 
     drawWheel(students);
 
@@ -4681,15 +4733,20 @@ function spinWheel(){
     const fullTurns =
         5 + Math.floor(Math.random()*3);
 
-    const finalAngle =
-        Math.random()*Math.PI*2;
-
     const startRotation = wheelRotation;
+
+    // اجعل مركز شريحة الطالبة المختارة يتوقف تمامًا تحت المؤشر العلوي.
+    const winnerIndex = students.findIndex(s => s.id === winner.id);
+    const sliceAngle = (Math.PI*2) / students.length;
+    const pointerAngle = -Math.PI/2;
+    const desiredRotation = pointerAngle - (winnerIndex + 0.5) * sliceAngle;
+    const twoPi = Math.PI*2;
+    const alignmentDelta = ((desiredRotation - startRotation) % twoPi + twoPi) % twoPi;
 
     const targetRotation =
         startRotation +
-        fullTurns*Math.PI*2 +
-        finalAngle;
+        fullTurns*twoPi +
+        alignmentDelta;
 
     const duration = 4200;
 
@@ -4707,9 +4764,8 @@ function spinWheel(){
             startRotation +
             (targetRotation-startRotation)*eased;
 
-        drawWheel(
-            getStudentsByClass(classId)
-        );
+        // أثناء الدوران نظهر فقط الأسماء الداخلة في هذه الدورة.
+        drawWheel(students);
 
         if(progress < 1){
 
@@ -4726,6 +4782,8 @@ function spinWheel(){
             document.getElementById("wheelResult").textContent =
                 `🎉 الطالبة المختارة: ${winner.name}`;
 
+            // في وضع بدون تكرار يبقى الاسم المختار ظاهرًا بعد توقف العجلة،
+            // ويُستبعد عند بدء الضغطة/الدورة التالية فقط.
             playWheelWin();
 
         }
