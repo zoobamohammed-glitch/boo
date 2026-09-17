@@ -1856,6 +1856,7 @@ let cloudConfigured = false;
 let lastCloudDB = null;
 let cloudWriteInFlight = false;
 let cloudWriteQueued = false;
+let lastShownRemoteParticipationId = null;
 
 function deepCopy(value){
     return value == null ? value : JSON.parse(JSON.stringify(value));
@@ -1902,6 +1903,30 @@ function buildCloudPatch(oldValue,newValue,path="",out={}){
     return out;
 }
 
+function showSyncedParticipationResult(event,withSound=false){
+    if(!event || !event.id) return;
+    const result = document.getElementById("scanResult");
+    if(result){
+        result.style.display = "block";
+        result.innerHTML = `
+            <div style="font-size:18px;margin-bottom:8px">
+                ✓ تم تسجيل المشاركة
+            </div>
+            <div>
+                👩🏻‍🎓 ${escapeHTML(event.studentName || "")}
+            </div>
+            <div style="margin-top:6px">
+                📅 ${formatDate(event.date || today())}
+                &nbsp;&nbsp;
+                🕐 ${escapeHTML(event.time || "")}
+            </div>
+        `;
+    }
+    if(withSound){
+        try{ playSuccess(); }catch(e){}
+    }
+}
+
 async function initCloudSync(){
     if(!isFirebaseConfigured()) return;
 
@@ -1917,6 +1942,13 @@ async function initCloudSync(){
 
         ref.on("value", snapshot=>{
             const remote = snapshot.val();
+            const remoteParticipationEvent = remote && remote.lastParticipationEvent;
+            const shouldShowRemoteParticipation = !!(
+                remoteParticipationEvent &&
+                remoteParticipationEvent.id &&
+                remoteParticipationEvent.id !== lastShownRemoteParticipationId &&
+                Number(remoteParticipationEvent.timestamp || 0) > Date.now() - 30000
+            );
 
             // لا نسمح لنسخة سحابية أقدم أن تمحو تعديلًا محليًا ما زال قيد الحفظ.
             if(cloudWriteInFlight && !cloudApplying){
@@ -1940,6 +1972,12 @@ async function initCloudSync(){
                 lastCloudDB = deepCopy(db);
                 localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
                 refreshAllPagesAfterCloud();
+                if(remoteParticipationEvent && remoteParticipationEvent.id){
+                    if(shouldShowRemoteParticipation){
+                        showSyncedParticipationResult(remoteParticipationEvent,true);
+                    }
+                    lastShownRemoteParticipationId = remoteParticipationEvent.id;
+                }
                 cloudApplying = false;
                 cloudReady = true;
             }else{
@@ -3488,6 +3526,18 @@ function recordParticipation(studentId,method="manual"){
 
     db.participation.push(record);
 
+    /* آخر تسجيل QR/يدوي للمزامنة الفورية مع شاشة الأجهزة الأخرى */
+    db.lastParticipationEvent = {
+        id:record.id,
+        studentId:studentId,
+        studentName:s.name,
+        date:record.date,
+        time:record.time,
+        timestamp:record.timestamp,
+        method:method
+    };
+    lastShownRemoteParticipationId = record.id;
+
     saveDB();
 
     playSuccess();
@@ -3495,30 +3545,7 @@ function recordParticipation(studentId,method="manual"){
     const message =
         `تم تسجيل المشاركة ✓ — ${s.name} — اليوم ${formatDate(today())} — ${nowTime()}`;
 
-    const result =
-        document.getElementById("scanResult");
-
-    if(result){
-
-        result.style.display = "block";
-
-        result.innerHTML = `
-            <div style="font-size:18px;margin-bottom:8px">
-                ✓ تم تسجيل المشاركة
-            </div>
-
-            <div>
-                👩🏻‍🎓 ${escapeHTML(s.name)}
-            </div>
-
-            <div style="margin-top:6px">
-                📅 ${formatDate(today())}
-                &nbsp;&nbsp;
-                🕐 ${nowTime()}
-            </div>
-        `;
-
-    }
+    showSyncedParticipationResult(db.lastParticipationEvent,false);
 
     showToast(message,"success");
 
