@@ -1790,6 +1790,7 @@ const defaultDB = {
     gradeCategories:[],
     gradeAssessments:[],
     flexibleGrades:[],
+    wheelUsed:{},
     /* البيانات القديمة تبقى محفوظة داخليًا فقط حتى لا تضيع النسخ السابقة */
     works:[],
     workItems:[],
@@ -1819,7 +1820,8 @@ function loadDB(){
                 workItems:Array.isArray(parsed.workItems) ? parsed.workItems : [],
                 gradeCategories:Array.isArray(parsed.gradeCategories) ? parsed.gradeCategories : [],
                 gradeAssessments:Array.isArray(parsed.gradeAssessments) ? parsed.gradeAssessments : [],
-                flexibleGrades:Array.isArray(parsed.flexibleGrades) ? parsed.flexibleGrades : []
+                flexibleGrades:Array.isArray(parsed.flexibleGrades) ? parsed.flexibleGrades : [],
+                wheelUsed:(parsed.wheelUsed && typeof parsed.wheelUsed === "object") ? parsed.wheelUsed : {}
             };
         }
 
@@ -1967,7 +1969,8 @@ async function initCloudSync(){
                     workItems:Array.isArray(remote.workItems) ? remote.workItems : [],
                     gradeCategories:Array.isArray(remote.gradeCategories) ? remote.gradeCategories : [],
                     gradeAssessments:Array.isArray(remote.gradeAssessments) ? remote.gradeAssessments : [],
-                    flexibleGrades:Array.isArray(remote.flexibleGrades) ? remote.flexibleGrades : []
+                    flexibleGrades:Array.isArray(remote.flexibleGrades) ? remote.flexibleGrades : [],
+                    wheelUsed:(remote.wheelUsed && typeof remote.wheelUsed === "object") ? remote.wheelUsed : {}
                 };
                 lastCloudDB = deepCopy(db);
                 localStorage.setItem(STORAGE_KEY,JSON.stringify(db));
@@ -2048,6 +2051,7 @@ function refreshAllPagesAfterCloud(){
         renderGradeAssessments();
         renderBehaviorPage();
         renderClassReport();
+        wheelUsed = (db.wheelUsed && typeof db.wheelUsed === "object") ? db.wheelUsed : {};
         prepareWheel();
     }catch(error){
         console.error("Cloud refresh error:",error);
@@ -4545,14 +4549,19 @@ function printCurrentReport(){
 let wheelRotation = 0;
 let wheelSpinning = false;
 const WHEEL_USED_STORAGE_KEY = "physics_tracker_wheel_used_v1";
-let wheelUsed = {};
+let wheelUsed = (db.wheelUsed && typeof db.wheelUsed === "object") ? db.wheelUsed : {};
+/* ترحيل حالة العجلة القديمة مرة واحدة إن وُجدت، ثم تصبح الحالة ضمن قاعدة البيانات السحابية. */
 try {
-    wheelUsed = JSON.parse(localStorage.getItem(WHEEL_USED_STORAGE_KEY) || "{}") || {};
-} catch(e) {
-    wheelUsed = {};
-}
+    const legacyWheelUsed = JSON.parse(localStorage.getItem(WHEEL_USED_STORAGE_KEY) || "{}") || {};
+    if(Object.keys(wheelUsed).length === 0 && Object.keys(legacyWheelUsed).length){
+        wheelUsed = legacyWheelUsed;
+        db.wheelUsed = wheelUsed;
+    }
+} catch(e) {}
 function saveWheelUsed(){
+    db.wheelUsed = wheelUsed;
     localStorage.setItem(WHEEL_USED_STORAGE_KEY, JSON.stringify(wheelUsed));
+    saveDB();
 }
 
 function prepareWheel(){
@@ -4965,7 +4974,8 @@ function deleteAllData(){
 
     saveDB();
 
-    wheelUsed = {};
+    wheelUsed = db.wheelUsed;
+    localStorage.removeItem(WHEEL_USED_STORAGE_KEY);
 
     currentQRStudentId = null;
 
