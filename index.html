@@ -4544,7 +4544,16 @@ function printCurrentReport(){
 
 let wheelRotation = 0;
 let wheelSpinning = false;
+const WHEEL_USED_STORAGE_KEY = "physics_tracker_wheel_used_v1";
 let wheelUsed = {};
+try {
+    wheelUsed = JSON.parse(localStorage.getItem(WHEEL_USED_STORAGE_KEY) || "{}") || {};
+} catch(e) {
+    wheelUsed = {};
+}
+function saveWheelUsed(){
+    localStorage.setItem(WHEEL_USED_STORAGE_KEY, JSON.stringify(wheelUsed));
+}
 
 function prepareWheel(){
 
@@ -4730,6 +4739,7 @@ function spinWheel(){
         if(students.length === 0){
 
             wheelUsed[classId] = [];
+            saveWheelUsed();
 
             students =
                 getStudentsByClass(classId);
@@ -4747,6 +4757,7 @@ function spinWheel(){
 
     if(mode === "no-repeat"){
         wheelUsed[classId].push(winner.id);
+        saveWheelUsed();
     }
 
     wheelSpinning = true;
